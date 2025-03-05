@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { createScene, createNetworkParticles } from "@/utils/three/setupScene";
+import { createGlobe } from "@/utils/three/createGlobe";
 
 const HeroSection = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -28,6 +29,16 @@ const HeroSection = () => {
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
     directionalLight.position.set(0, 5, 5);
     scene.add(directionalLight);
+    // Create globe
+    const { globe, animate: animateGlobe } = createGlobe({
+      radius: 4,
+      color: "#E2E8F0",
+      emissive: "#94A3B8",
+      emissiveIntensity: 0.2,
+      metalness: 0.1,
+      roughness: 0.3,
+    });
+    scene.add(globe);
     
     // Create network particles with circular dots and more visible colors
     const { particles, connections, animate: animateNetwork } = createNetworkParticles(
@@ -43,6 +54,7 @@ const HeroSection = () => {
     // Start animation
     animate((delta) => {
       animateNetwork(delta);
+      animateGlobe(delta);
       
       // Add slight camera movement
       camera.position.x = Math.sin(delta) * 0.3;
@@ -87,26 +99,26 @@ const HeroSection = () => {
   }, []);
 
   return (
-    <section className="relative min-h-screen pt-20 overflow-hidden">
+    <section className="relative min-h-screen pt-20 overflow-hidden bg-gradient-to-br from-purple-900/30 via-blue-900/20 to-slate-900/30 before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_center,rgba(139,92,246,0.05)_0%,rgba(30,58,138,0.08)_100%)]">
       {/* 3D Background */}
       <div ref={containerRef} className="absolute inset-0 z-0" />
       
       {/* Content */}
       <div className="section-container relative z-10 flex flex-col items-center justify-center min-h-[80vh]">
-        <span className="badge badge-blue mb-4 animate-fade-in [animation-delay:300ms]">
+        <span className="badge badge-blue mb-4 animate-slide-up" style={{ animationDelay: "300ms" }}>
           Expertise · Network · Intelligence
         </span>
         
-        <h1 className="section-title text-center max-w-5xl animate-fade-in [animation-delay:400ms]">
+        <h1 className="section-title text-center max-w-5xl animate-slide-up" style={{ animationDelay: "400ms" }}>
           Connect with <span className="text-gradient">Industry Experts</span> for Informed Decision Making
         </h1>
         
-        <p className="section-subtitle text-center animate-fade-in [animation-delay:500ms]">
+        <p className="section-subtitle text-center animate-slide-up" style={{ animationDelay: "500ms" }}>
           Leverage our diverse network of specialists and AI-powered insights 
           to find the perfect expertise for your specific challenges.
         </p>
         
-        <div className="flex flex-col sm:flex-row gap-4 mt-8 animate-fade-in [animation-delay:600ms]">
+        <div className="flex flex-col sm:flex-row gap-4 mt-8 animate-slide-up" style={{ animationDelay: "600ms" }}>
           <a href="#network" className="btn-primary">
             Explore the Network
           </a>
@@ -116,7 +128,7 @@ const HeroSection = () => {
         </div>
         
         {/* Statistics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 mt-20 animate-fade-in [animation-delay:700ms]">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 mt-20 animate-slide-up" style={{ animationDelay: "700ms" }}>
           <div className="text-center">
             <p className="text-4xl font-bold text-gradient">5,000+</p>
             <p className="text-sm text-muted-foreground">Verified Experts</p>

@@ -1,4 +1,3 @@
-
 import * as THREE from "three";
 
 interface SceneOptions {
@@ -104,8 +103,8 @@ export const createScene = ({
 export const createNetworkParticles = (
   count: number = 100,
   radius: number = 5,
-  color: string = "#3377ff",
-  connectionColor: string = "#e0e7ff"
+  color: string = "#8B5CF6",
+  connectionColor: string = "#D3E4FD"
 ) => {
   // Create particle geometry
   const particlesGeometry = new THREE.BufferGeometry();
@@ -119,7 +118,7 @@ export const createNetworkParticles = (
     const i3 = i * 3;
     const phi = Math.random() * Math.PI * 2;
     const theta = Math.random() * Math.PI;
-    const r = radius * Math.cbrt(Math.random()); // Cube root for uniform distribution
+    const r = radius * Math.cbrt(Math.random());
 
     positions[i3] = r * Math.sin(theta) * Math.cos(phi);     // x
     positions[i3 + 1] = r * Math.sin(theta) * Math.sin(phi); // y
@@ -130,22 +129,53 @@ export const createNetworkParticles = (
     colors[i3 + 1] = colorObj.g;
     colors[i3 + 2] = colorObj.b;
 
-    // Random sizes for particles
-    sizes[i] = Math.random() * 0.5 + 0.1;
+    // Random sizes for particles but slightly larger
+    sizes[i] = Math.random() * 0.7 + 0.2;
   }
 
   particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   particlesGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
 
-  // Create particle material
+  // Create circular particle texture
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const size = 128;
+  canvas.width = size;
+  canvas.height = size;
+  
+  if (ctx) {
+    // Draw a circular particle
+    ctx.beginPath();
+    ctx.arc(size/2, size/2, size/2, 0, Math.PI * 2);
+    ctx.fillStyle = 'white';
+    ctx.fill();
+    
+    // Create a soft gradient for better visual
+    const gradient = ctx.createRadialGradient(
+      size/2, size/2, 0, 
+      size/2, size/2, size/2
+    );
+    gradient.addColorStop(0, 'white');
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    
+    ctx.globalCompositeOperation = 'source-in';
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+  }
+  
+  const particleTexture = new THREE.CanvasTexture(canvas);
+
+  // Create particle material with the circular texture
   const particlesMaterial = new THREE.PointsMaterial({
-    size: 0.2,
+    size: 0.3,
     sizeAttenuation: true,
     transparent: true,
-    alphaTest: 0.001,
     depthWrite: false,
     vertexColors: true,
+    map: particleTexture,
+    alphaMap: particleTexture,
+    alphaTest: 0.001,
   });
 
   // Create particle system
@@ -157,11 +187,11 @@ export const createNetworkParticles = (
   const connectionMaterial = new THREE.LineBasicMaterial({ 
     color: connectionColor,
     transparent: true,
-    opacity: 0.4,
+    opacity: 0.6,
   });
 
   // Connect some particles with lines
-  const connectionsCount = Math.min(count * 2, 200); // Limit total connections
+  const connectionsCount = Math.min(count * 2, 200);
   
   for (let i = 0; i < connectionsCount; i++) {
     const pointA = Math.floor(Math.random() * count);

@@ -29,12 +29,12 @@ const HeroSection = () => {
     directionalLight.position.set(0, 5, 5);
     scene.add(directionalLight);
     
-    // Create network particles
+    // Create network particles with circular dots and more visible colors
     const { particles, connections, animate: animateNetwork } = createNetworkParticles(
       200, // Count
       7,   // Radius
-      "#3377ff", // Particle color
-      "#e0e7ff"  // Connection color
+      "#8B5CF6", // Changed to vibrant purple
+      "#D3E4FD"  // Changed to soft blue
     );
     
     scene.add(particles);

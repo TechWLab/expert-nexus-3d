@@ -1,6 +1,9 @@
 
+import { useEffect, useRef } from "react";
+import * as THREE from "three";
 import GlassCard from "@/components/ui/GlassCard";
 import { ArrowRight, Brain, Globe, LineChart, Users } from "lucide-react";
+import { createScene, createFloatingObjects } from "@/utils/three/setupScene";
 
 const features = [
   {
@@ -34,6 +37,99 @@ const features = [
 ];
 
 const FeatureCards = () => {
+  const consultantVisualizationRef = useRef<HTMLDivElement>(null);
+  const sceneRef = useRef<{ stop: () => void } | null>(null);
+
+  useEffect(() => {
+    if (!consultantVisualizationRef.current) return;
+
+    const container = consultantVisualizationRef.current;
+    
+    // Create scene
+    const { scene, camera, animate, stop } = createScene({
+      container,
+      background: "transparent",
+      cameraPosition: new THREE.Vector3(0, 0, 5),
+    });
+    
+    // Add lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(2, 5, 3);
+    scene.add(directionalLight);
+    
+    // Add floating objects
+    const { objects, animate: animateObjects } = createFloatingObjects(5);
+    objects.forEach(object => scene.add(object));
+    
+    // Add central user object
+    const userGeometry = new THREE.SphereGeometry(0.7, 32, 32);
+    const userMaterial = new THREE.MeshStandardMaterial({ 
+      color: 0x8B5CF6,
+      emissive: 0x8B5CF6,
+      emissiveIntensity: 0.2,
+      roughness: 0.3,
+      metalness: 0.8
+    });
+    const userSphere = new THREE.Mesh(userGeometry, userMaterial);
+    scene.add(userSphere);
+    
+    // Add connection lines between the user and floating objects
+    const linesMaterial = new THREE.LineBasicMaterial({ 
+      color: 0xD3E4FD, 
+      transparent: true,
+      opacity: 0.6
+    });
+    
+    const connectionLines: THREE.Line[] = [];
+    
+    objects.forEach(object => {
+      const lineGeometry = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        object.position
+      ]);
+      const line = new THREE.Line(lineGeometry, linesMaterial);
+      scene.add(line);
+      connectionLines.push(line);
+    });
+    
+    // Start animation
+    animate((delta) => {
+      animateObjects(delta);
+      
+      // Update the connection lines
+      objects.forEach((object, index) => {
+        const positions = new Float32Array([
+          userSphere.position.x, userSphere.position.y, userSphere.position.z,
+          object.position.x, object.position.y, object.position.z
+        ]);
+        connectionLines[index].geometry.setAttribute(
+          'position', 
+          new THREE.BufferAttribute(positions, 3)
+        );
+      });
+      
+      // Rotate user sphere
+      userSphere.rotation.y += delta * 0.5;
+      
+      // Slight camera movement
+      camera.position.x = Math.sin(delta * 0.2) * 0.3;
+      camera.position.y = Math.cos(delta * 0.2) * 0.3;
+      camera.lookAt(0, 0, 0);
+    });
+    
+    // Store scene reference for cleanup
+    sceneRef.current = { stop };
+    
+    return () => {
+      if (sceneRef.current) {
+        sceneRef.current.stop();
+      }
+    };
+  }, []);
+
   return (
     <section id="features" className="section-container relative">
       <div className="text-center mb-16">
@@ -72,7 +168,7 @@ const FeatureCards = () => {
         ))}
       </div>
 
-      {/* Highlight feature */}
+      {/* Highlight feature with Three.js visualization */}
       <GlassCard className="mt-12 p-8 md:p-12 animate-fade-in [animation-delay:700ms]">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
           <div>
@@ -107,25 +203,31 @@ const FeatureCards = () => {
             </button>
           </div>
           
-          <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-8 flex items-center justify-center">
-            <div className="relative w-full aspect-square max-w-sm">
-              <div className="absolute inset-0 bg-blue-500/10 rounded-full animate-pulse-slow" />
-              <div className="absolute inset-4 bg-purple-500/10 rounded-full animate-pulse-slow [animation-delay:1s]" />
-              <div className="absolute inset-8 bg-blue-500/10 rounded-full animate-pulse-slow [animation-delay:2s]" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="bg-white rounded-full p-4 shadow-lg">
-                  <Users className="w-12 h-12 text-primary" />
-                </div>
+          <div className="relative w-full aspect-square min-h-[300px]">
+            {/* Three.js visualization container */}
+            <div 
+              ref={consultantVisualizationRef} 
+              className="absolute inset-0 rounded-xl overflow-hidden"
+            />
+            
+            {/* Overlay text labels */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="absolute top-[20%] left-[15%] bg-white/80 backdrop-blur-sm text-xs rounded-full px-2 py-1 shadow-md">
+                Finance Expert
               </div>
-              
-              {/* Connection lines animation */}
-              <div className="absolute inset-0">
-                <svg width="100%" height="100%" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                  <line x1="100" y1="100" x2="180" y2="30" stroke="#3377ff" strokeWidth="1" strokeDasharray="5,5" className="animate-pulse-slow" />
-                  <line x1="100" y1="100" x2="30" y2="50" stroke="#3377ff" strokeWidth="1" strokeDasharray="5,5" className="animate-pulse-slow [animation-delay:1s]" />
-                  <line x1="100" y1="100" x2="160" y2="170" stroke="#3377ff" strokeWidth="1" strokeDasharray="5,5" className="animate-pulse-slow [animation-delay:0.5s]" />
-                  <line x1="100" y1="100" x2="40" y2="150" stroke="#3377ff" strokeWidth="1" strokeDasharray="5,5" className="animate-pulse-slow [animation-delay:1.5s]" />
-                </svg>
+              <div className="absolute top-[25%] right-[20%] bg-white/80 backdrop-blur-sm text-xs rounded-full px-2 py-1 shadow-md">
+                Technology Advisor
+              </div>
+              <div className="absolute bottom-[30%] left-[25%] bg-white/80 backdrop-blur-sm text-xs rounded-full px-2 py-1 shadow-md">
+                Marketing Specialist
+              </div>
+              <div className="absolute bottom-[20%] right-[15%] bg-white/80 backdrop-blur-sm text-xs rounded-full px-2 py-1 shadow-md">
+                Industry Analyst
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-lg text-sm font-medium">
+                  You
+                </div>
               </div>
             </div>
           </div>

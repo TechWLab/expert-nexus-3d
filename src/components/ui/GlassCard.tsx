@@ -1,5 +1,5 @@
 
-import { ReactNode } from "react";
+import { ReactNode, CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 
 interface GlassCardProps {
@@ -7,9 +7,10 @@ interface GlassCardProps {
   className?: string;
   hoverEffect?: boolean;
   onClick?: () => void;
+  style?: CSSProperties;
 }
 
-const GlassCard = ({ children, className, hoverEffect = true, onClick }: GlassCardProps) => {
+const GlassCard = ({ children, className, hoverEffect = true, onClick, style }: GlassCardProps) => {
   return (
     <div 
       className={cn(
@@ -19,6 +20,7 @@ const GlassCard = ({ children, className, hoverEffect = true, onClick }: GlassCa
         className
       )}
       onClick={onClick}
+      style={style}
     >
       {children}
     </div>
